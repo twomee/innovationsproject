@@ -4,6 +4,8 @@ from logConfig import Log
 from clipboard import ClipBoard
 from keysListner import KeysListnerObject
 from sensorTemp import temperature
+from DateManager import DateManager
+from redisDB import redisDB
 # from .Project import keyboardMouseListener
 logger = Log.configureLogger()
 
@@ -23,12 +25,13 @@ def main():
 
     absPath = pathlib.Path().absolute()
     print(absPath)
-    cb = ClipBoard(logger)
-    klo = KeysListnerObject(logger)
-    t = temperature(logger)
-    # result = t.cpuTemp()
-    # klo.run()
-    # cb.copyFromClipBoard()
+    dateManager = DateManager()
+    r = redisDB()
+    cb = ClipBoard(logger,dateManager,r)
+    klo = KeysListnerObject(logger,dateManager,r)
+    t = temperature(logger,dateManager,r)
+
+
     t1 = threading.Thread(target=t.cpuTemp, args=[])
     t2 = threading.Thread(target=klo.run, args=[])
     t3 = threading.Thread(target=cb.copyFromClipBoard, args=[])
