@@ -1,6 +1,5 @@
 import subprocess
 import time
-import json
 
 class temperature():
 

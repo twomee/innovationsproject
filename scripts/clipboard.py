@@ -8,23 +8,8 @@ class ClipBoard():
         self.dateManager = dateManager
         self.r = redis
         self.refreshDataFromRedisDB()
+        self.pasteboard = AppKit.NSPasteboard.generalPasteboard()
 
-    def copyFromClipBoard(self):
-        tempCopy = "a"
-        pb = AppKit.NSPasteboard.generalPasteboard()
-        pbstring = pb.stringForType_(AppKit.NSStringPboardType)
-        while True:
-            try:
-                pbstring = pb.stringForType_(AppKit.NSStringPboardType)
-                if(pbstring != tempCopy):
-                    tempCopy = pbstring
-                    self.insertToDict(pbstring)
-                    self.updatreDBValues()
-            except Exception as error:
-                self.logger.error(error)
-
-    def insertToDict(self,pbstring):
-        self.clipboardDict['clipboard'].append(pbstring)
 
     def refreshDataFromRedisDB(self):
         result =  self.r.getValue(self.dateManager.getDateAndTime())
@@ -33,7 +18,22 @@ class ClipBoard():
         else:
             self.clipboardDict = result
             self.clipboardDict["clipboard"] = []
+            
+    def copyFromClipBoard(self):
+        tempCopy = "a"
+        pasteboardString = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
+        while True:
+            try:
+                pasteboardString = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
+                if(pasteboardString != tempCopy):
+                    tempCopy = pasteboardString
+                    self.insertToDict(pasteboardString)
+                    self.updatreDBValues()
+            except Exception as error:
+                self.logger.error(error)
 
+    def insertToDict(self,pasteboardString):
+        self.clipboardDict['clipboard'].append(pasteboardString)
 
     def updatreDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDateAndTime(),
