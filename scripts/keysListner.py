@@ -4,10 +4,11 @@ class KeysListnerObject():
 
     #init the vars, will contain dict which count the nubmers of times every char was pressed:
     #{'a':1,'b':2,'c':10,'d':0}
-    def __init__(self,logger,dateManager,redis):
+    def __init__(self,logger,dateManager,redis,queue):
         self.logger = logger
         self.dateManager =  dateManager
         self.r = redis
+        self.queue = queue
         self.refreshDataFromRedisDB()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
@@ -26,7 +27,7 @@ class KeysListnerObject():
             self.logger.info('alphanumeric key {0} pressed'.format(
                 key.char))
             self.insertToDict(key)
-            
+
             self.updateDBValues()
 
         except AttributeError:
@@ -49,20 +50,24 @@ class KeysListnerObject():
 
     #insert the new data to the dict
     def insertToDict(self,key):
-        previousData = self.r.getValue(self.dateManager.getDate())
-        self.alphabet = previousData
-        self.logger.warning("!!!!!!!!!!!!!!!!!previousData :", self.alphabet )
-        self.logger.warning(self.alphabet )
-        if(key.char in self.alphabet):
-            self.alphabet[key.char] = self.alphabet[key.char] + 1
+        if(self.r.isKeyExists(self.dateManager.getDate())):
+            previousData = self.r.getValue(self.dateManager.getDate())
+            self.alphabet = previousData
+            self.logger.warning("!!!!!!!!!!!!!!!!!previousData :", self.alphabet )
+            self.logger.warning(self.alphabet )
+            if(key.char in self.alphabet):
+                self.alphabet[key.char] = self.alphabet[key.char] + 1
+            else:
+                self.alphabet[key.char] = 1
+            self.queue.put(self.alphabet)
         else:
-            self.alphabet[key.char] = 1
+            self.alphabet = {}
         
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
-                                self.alphabet)
+                                self.queue)
         self.logger.info("on KeyListener ->updateDBValues-> self.alphabet: ", self.alphabet)
         self.logger.info(self.alphabet)
 

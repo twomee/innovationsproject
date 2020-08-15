@@ -5,19 +5,21 @@ class ClipBoard():
 
     #init the vars, will contain dict where the key is the word 'clipboard' and the values are the texts that copied to clipboard:
     #{'clipboard':['some text that copied','some more text that copied']}
-    def __init__(self,logger,dateManager,redis):
+    def __init__(self,logger,dateManager,redis,queue):
         self.logger = logger
         self.dateManager = dateManager
         self.r = redis
-        self.refreshDataFromRedisDB()
+        self.queue = queue
         self.pasteboard = AppKit.NSPasteboard.generalPasteboard()
+        self.refreshDataFromRedisDB()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
-    def refreshDataFromRedisDB(self):
+    def refreshDataFromRedisDB(self,data):
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result =  self.r.getValue(self.dateManager.getDate())
             self.clipboardDict = result
-            self.clipboardDict["clipboard"] = []
+            if(self.clipboardDict.get("clipboard") is None):
+                self.clipboardDict["clipboard"] = []
             self.logger.info("on ClipBoard ->refreshDataFromRedisDB-> self.clipboardDict: ")
             self.logger.info(self.clipboardDict)
         else:
@@ -27,12 +29,14 @@ class ClipBoard():
             
     #take the text that copy to clipboard and insert him to DB only when he get changed. alwayes listen to changes by loop
     def copyFromClipBoard(self):
-        tempCopy = "a"
-        pasteboardString = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
+        #take temp copy of clipboard to prevent insert same value all the time
+        #and also for prevent to insert trash like copy from last run
+        tempCopy = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
+        pasteboardString = None
         while True:
             try:
                 pasteboardString = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
-                if(pasteboardString != tempCopy):
+                if(pasteboardString != tempCopy and pasteboardString is not None):
                     tempCopy = pasteboardString
                     self.insertToDict(pasteboardString)
                     self.updatreDBValues()
@@ -45,12 +49,16 @@ class ClipBoard():
         self.clipboardDict = previousData
         self.logger.warning("!!!!!!!!!!!!!!!!!previousData :", self.clipboardDict )
         self.logger.warning(self.clipboardDict )
-        self.clipboardDict["clipboard"].append(pasteboardString)
+        if("clipboard" not in self.clipboardDict):
+            self.clipboardDict["clipboard"] = [pasteboardString]
+        else:
+            self.clipboardDict["clipboard"].append(pasteboardString)
+        self.queue.put(self.clipboardDict)
 
     #insert and update the dict object on DB where the key is date.
     def updatreDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
-                                self.clipboardDict)
+                                self.queue)
         self.logger.info("on ClipBoard ->updatreDBValues-> self.clipboardDict: ")
         self.logger.info(self.clipboardDict)
 

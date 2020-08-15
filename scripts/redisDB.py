@@ -11,7 +11,7 @@ class redisDB:
     # set value to object on redis DB with transactional action.
     # mean that if two modules trying to set same object,
     # one will be waiting to the first to finish update th object.
-    def setTransactionalValue(self,date,obj):
+    def setTransactionalValue(self,date,queue):
         with self.r.pipeline() as pipe:
             error_count = 0
             while error_count != -1:
@@ -23,7 +23,7 @@ class redisDB:
                     logging.info("started watch")
                     pipe.multi()
                     #we inserting the data as json object to support complex structures
-                    pipe.set(date,json.dumps(obj))
+                    pipe.set(date,json.dumps(queue.get()))
                     logging.info("setted values on db")
                     pipe.execute()
                     error_count = -1

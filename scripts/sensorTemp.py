@@ -5,10 +5,11 @@ class temperature():
 
     #init the vars, will contain dict with key of cpu and values of list with temperature of the cpu:
     #{'cpu':[60,50.5,70.3]}
-    def __init__(self,logger,dateManager,redis):
+    def __init__(self,logger,dateManager,redis,queue):
         self.logger = logger
         self.dateManager = dateManager
         self.r = redis
+        self.queue = queue
         self.refreshDataFromRedisDB()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
@@ -16,7 +17,8 @@ class temperature():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result = self.r.getValue(self.dateManager.getDate())
             self.tempDict = result
-            self.tempDict["cpu"] = []
+            if(self.tempDict.get("cpu") is None):
+                self.tempDict["cpu"] = []
             self.logger.info("on temperature ->refreshDataFromRedisDB-> self.tempDict: ")
             self.logger.info(self.tempDict)
         else:
@@ -40,12 +42,16 @@ class temperature():
         self.tempDict = previousData
         self.logger.warning("!!!!!!!!!!!!!!!!!previousData :", self.tempDict )
         self.logger.warning(self.tempDict )
-        self.tempDict["cpu"].append(result)
+        if("cpu" not in self.tempDict):
+            self.tempDict["cpu"] = [result]
+        else:
+            self.tempDict["cpu"].append(result)
+        self.queue.put(self.tempDict)
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
-                                self.tempDict)
+                                self.queue)
         self.logger.info("on temperature ->updateDBValues-> self.tempDict: ", self.tempDict)
         self.logger.info(self.tempDict)
 
