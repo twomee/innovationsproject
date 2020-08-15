@@ -10,20 +10,23 @@ class temperature():
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
-        self.refreshDataFromRedisDB()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
-    def refreshDataFromRedisDB(self):
+    def refreshAndUpdateDataFromRedisDB(self,data):
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result = self.r.getValue(self.dateManager.getDate())
             self.tempDict = result
             if(self.tempDict.get("cpu") is None):
-                self.tempDict["cpu"] = []
+                self.tempDict["cpu"] = [data]
+            else:
+                self.tempDict["cpu"].append(data)
             self.logger.info("on temperature ->refreshDataFromRedisDB-> self.tempDict: ")
             self.logger.info(self.tempDict)
         else:
             self.tempDict = {}
-            self.tempDict["cpu"] = []
+            self.tempDict["cpu"] = [data]
+        self.queue.put(self.tempDict)
+
 
     #call to subprocess and do linux command. taking the output and insert it to the dict object. this occurs every 1 minute
     def cpuTemp(self):
@@ -32,21 +35,10 @@ class temperature():
             time.sleep(60.0 - ((time.time() - starttime) % 60.0))
             result = subprocess.run(['osx-cpu-temp'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace("\u00b0C\n", "")
             self.logger.info("CPU temperature is " + result)
-            self.insertToDict(result)
+            # self.insertToDict(result)
+            self.refreshAndUpdateDataFromRedisDB(result)
             print(self.tempDict)
             self.updateDBValues()
-
-    #insert the new data to the dict
-    def insertToDict(self,result):
-        previousData = self.r.getValue(self.dateManager.getDate())
-        self.tempDict = previousData
-        self.logger.warning("!!!!!!!!!!!!!!!!!previousData :", self.tempDict )
-        self.logger.warning(self.tempDict )
-        if("cpu" not in self.tempDict):
-            self.tempDict["cpu"] = [result]
-        else:
-            self.tempDict["cpu"].append(result)
-        self.queue.put(self.tempDict)
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
