@@ -23,8 +23,6 @@ class temperature():
                 self.tempDict[temperature.TEMPERATURE_KEY] = [data]
             else:
                 self.tempDict[temperature.TEMPERATURE_KEY].append(data)
-            self.logger.info("on temperature ->refreshDataFromRedisDB-> self.tempDict: ")
-            self.logger.info(self.tempDict)
         else:
             self.tempDict = {}
             self.tempDict[temperature.TEMPERATURE_KEY] = [data]
@@ -37,7 +35,7 @@ class temperature():
             starttime = time.time()
             time.sleep(60.0 - ((time.time() - starttime) % 60.0))
             result = subprocess.run([temperature.LINUX_COMMAND], stdout=subprocess.PIPE).stdout.decode(temperature.DECODE_TYPE).replace("\u00b0C\n", "")
-            self.logger.info("CPU temperature is " + result)
+            # self.logger.info("CPU temperature is " + result)
             # self.insertToDict(result)
             self.refreshAndUpdateDataFromRedisDB(result)
             print(self.tempDict)
@@ -47,7 +45,7 @@ class temperature():
     def updateDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
                                 self.queue)
-        self.logger.info("on temperature ->updateDBValues-> self.tempDict: ", self.tempDict)
+        self.logger.info("on temperature ->updateDBValues-> self.tempDict: ")
         self.logger.info(self.tempDict)
 
 

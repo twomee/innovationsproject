@@ -50,11 +50,12 @@ data = {}
 
 
 # data = {
-#     "10/8/2020":
+#     "10/8/2020": {
 #     a:1,
 #     b:2,
-#     cpu:60,
-#     clipboard:{some,text,that,copied}
+#     cpu:[60,50,30,20,50],
+#     clipboard:[some,text,that,copied]
+#    }
 # }
 
 

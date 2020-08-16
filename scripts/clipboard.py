@@ -22,8 +22,6 @@ class ClipBoard():
                 self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
             else:
                 self.clipboardDict[ClipBoard.CLIPBOARD_KEY].append(data)
-            self.logger.info("on ClipBoard ->refreshDataFromRedisDB-> self.clipboardDict: ")
-            self.logger.info(self.clipboardDict)
         else:
             self.clipboardDict = {}
             self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
@@ -51,7 +49,7 @@ class ClipBoard():
     def updatreDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
                                 self.queue)
-        self.logger.info("on ClipBoard ->updatreDBValues-> self.clipboardDict: ")
+        self.logger.info("on ClipBoard ->updatreDBValues-> self.clipboardDict: " )
         self.logger.info(self.clipboardDict)
 
 

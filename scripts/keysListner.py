@@ -15,8 +15,6 @@ class KeysListnerObject():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result = self.r.getValue(self.dateManager.getDate())
             self.alphabet = result
-            self.logger.info("on KeyListener ->refreshDataFromRedisDB-> self.alphabet: ", self.alphabet)
-            self.logger.info(self.alphabet)
             if(key.char in self.alphabet):
                 self.alphabet[key.char] = self.alphabet[key.char] + 1
             else:
@@ -56,7 +54,7 @@ class KeysListnerObject():
     def updateDBValues(self):
         self.r.setTransactionalValue(self.dateManager.getDate(),
                                 self.queue)
-        self.logger.info("on KeyListener ->updateDBValues-> self.alphabet: ", self.alphabet)
+        self.logger.info("on KeyListener ->updateDBValues-> self.alphabet: ")
         self.logger.info(self.alphabet)
 
 
