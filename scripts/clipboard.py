@@ -3,6 +3,7 @@ import AppKit
 
 class ClipBoard():
 
+    CLIPBOARD_KEY = "clipboard"
     #init the vars, will contain dict where the key is the word 'clipboard' and the values are the texts that copied to clipboard:
     #{'clipboard':['some text that copied','some more text that copied']}
     def __init__(self,logger,dateManager,redis,queue):
@@ -17,15 +18,15 @@ class ClipBoard():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result =  self.r.getValue(self.dateManager.getDate())
             self.clipboardDict = result
-            if(self.clipboardDict.get("clipboard") is None):
-                self.clipboardDict["clipboard"] = [data]
+            if(self.clipboardDict.get(ClipBoard.CLIPBOARD_KEY) is None):
+                self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
             else:
-                self.clipboardDict["clipboard"].append(data)
+                self.clipboardDict[ClipBoard.CLIPBOARD_KEY].append(data)
             self.logger.info("on ClipBoard ->refreshDataFromRedisDB-> self.clipboardDict: ")
             self.logger.info(self.clipboardDict)
         else:
             self.clipboardDict = {}
-            self.clipboardDict["clipboard"] = [data]
+            self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
         self.queue.put(self.clipboardDict)
 
             

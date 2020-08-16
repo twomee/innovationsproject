@@ -3,6 +3,9 @@ import time
 
 class temperature():
 
+    TEMPERATURE_KEY = "cpu"
+    DECODE_TYPE = 'utf-8'
+    LINUX_COMMAND = 'osx-cpu-temp'
     #init the vars, will contain dict with key of cpu and values of list with temperature of the cpu:
     #{'cpu':[60,50.5,70.3]}
     def __init__(self,logger,dateManager,redis,queue):
@@ -16,15 +19,15 @@ class temperature():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result = self.r.getValue(self.dateManager.getDate())
             self.tempDict = result
-            if(self.tempDict.get("cpu") is None):
-                self.tempDict["cpu"] = [data]
+            if(self.tempDict.get(temperature.TEMPERATURE_KEY) is None):
+                self.tempDict[temperature.TEMPERATURE_KEY] = [data]
             else:
-                self.tempDict["cpu"].append(data)
+                self.tempDict[temperature.TEMPERATURE_KEY].append(data)
             self.logger.info("on temperature ->refreshDataFromRedisDB-> self.tempDict: ")
             self.logger.info(self.tempDict)
         else:
             self.tempDict = {}
-            self.tempDict["cpu"] = [data]
+            self.tempDict[temperature.TEMPERATURE_KEY] = [data]
         self.queue.put(self.tempDict)
 
 
@@ -33,7 +36,7 @@ class temperature():
         while True:
             starttime = time.time()
             time.sleep(60.0 - ((time.time() - starttime) % 60.0))
-            result = subprocess.run(['osx-cpu-temp'], stdout=subprocess.PIPE).stdout.decode('utf-8').replace("\u00b0C\n", "")
+            result = subprocess.run([temperature.LINUX_COMMAND], stdout=subprocess.PIPE).stdout.decode(temperature.DECODE_TYPE).replace("\u00b0C\n", "")
             self.logger.info("CPU temperature is " + result)
             # self.insertToDict(result)
             self.refreshAndUpdateDataFromRedisDB(result)
