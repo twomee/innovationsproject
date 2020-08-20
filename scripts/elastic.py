@@ -13,6 +13,7 @@ import json
 class Elastic:
     HOST = 'localhost'
     PORT = 9200
+    ELASTIC_DATA_HEADER_NAME = '_source'
 
     def __init__(self,logger):
         self.es = Elasticsearch([{'host': Elastic.HOST, 'port': Elastic.PORT}])
@@ -20,32 +21,38 @@ class Elastic:
         self.searchObject = None
 
     def putDataOnIndex(self,indexValue,obj,docId):
-        index_exists = self.es.indices.exists(index=indexValue)
-        # if(index_exists == False):
         self.logger.info("updating document in index")
         res = self.es.index(index=indexValue,body=json.dumps(obj),id = docId)
-        print(res)
         res =self.getData(indexValue,docId)
-        # else:
-        #     res = self.getData(indexValue)
-        #     self.logger.info("!!!!!!!!!!!!res: " , res)
-        #     self.logger.info("index exist, update index")
-        #     self.es.update(index=indexValue,body=json.dumps(obj),id)
+
     
     def getData(self,indexValue,docId):
-        # self.searchObject = Search(using=self.es, index=indexValue)
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        # for hit in self.searchObject:
-        #     print(hit)
-
-        # for index in self.es.indices.get('*'):
-        #     print (index)
-        #     r = requests.get('http://localhost:9200/'+ index)
-        #     print(r.content)
-
-        res = self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
-        print(res)
+        res = self.es.get(index=indexValue,id = docId) 
+        #equal to:
+        # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
+        self.logger.info("elastic data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
+        result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
         
 
 
-        # curl -X DELETE 'http://localhost:9200/_all'
+# options to search:
+# search for all data:
+    # self.searchObject = Search(using=self.es, index=indexValue)
+    # for hit in self.searchObject:
+    #     print(hit)
+# search for indexes:
+    # for index in self.es.indices.get('*'):
+    #     print (index)
+    #     r = requests.get('http://localhost:9200/'+ index)
+    #     print(r.content)
+
+
+#option to delete:
+#via curl:
+    # curl -X DELETE 'http://localhost:9200/_all'
+
+#check if index exists:
+    #index_exists = self.es.indices.exists(index=indexValue)
+
+#update index with existing values(not worked for me):
+    #self.es.update(index=indexValue,body=json.dumps(obj),id = docId)
