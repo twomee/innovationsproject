@@ -6,6 +6,7 @@ from keysListner import KeysListnerObject
 from sensorTemp import temperature
 from DateManager import DateManager
 from redisDB import redisDB
+from elastic import Elastic
 import queue
 # from .Project import keyboardMouseListener
 
@@ -22,7 +23,8 @@ def main():
     # print(absPath)
     dateManager = DateManager()
     r = redisDB()
-    klo = KeysListnerObject(logger,dateManager,r,q)
+    e = Elastic(logger)
+    klo = KeysListnerObject(logger,dateManager,r,q,e)
     t = temperature(logger,dateManager,r,q)
     cb = ClipBoard(logger,dateManager,r,q)
 
