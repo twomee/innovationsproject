@@ -26,7 +26,7 @@ def main():
     e = Elastic(logger)
     klo = KeysListnerObject(logger,dateManager,r,q,e)
     t = temperature(logger,dateManager,r,q,e)
-    cb = ClipBoard(logger,dateManager,r,q)
+    cb = ClipBoard(logger,dateManager,r,q,e)
 
     threading.Thread(target=klo.run, args=[]).start()
     threading.Thread(target=t.cpuTemp, args=[]).start()

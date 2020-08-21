@@ -1,5 +1,6 @@
 from pynput import keyboard
 
+
 class KeysListnerObject():
 
     #init the vars, will contain dict which count the nubmers of times every char was pressed:
@@ -10,41 +11,19 @@ class KeysListnerObject():
         self.r = redis
         self.queue = queue
         self.e = elastic
-        self.elasticDocId = "keylistener"
-        self.keyListenerElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId
+        self.elasticDocId = "keylistener" # id of the class for elastic
+        self.keyListenerElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic()
-
-    #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
-    def refreshAndUpdateDataFromRedisDB(self,key):
-        if(self.r.isKeyExists(self.dateManager.getDate())):
-            result = self.r.getValue(self.dateManager.getDate())
-            self.alphabet = result
-            if(key.char in self.alphabet):
-                self.alphabet[key.char] = self.alphabet[key.char] + 1
-            else:
-                self.alphabet[key.char] = 1
-        else:
-            self.alphabet = {}
-        self.queue.put(self.alphabet)
-
-    def refreshAndUpdateDataFromElastic(self):
-        result = self.e.getData(self.keyListenerElasticIndex, self.elasticDocId)
-        if(result != None):
-            self.alphabetElastic = result
-        else:
-            self.alphabetElastic = {}
-
-
 
     #take every key that presses and insert him to dict object which mapping the chars.
     def on_press(self,key):
         try:
             self.logger.info('alphanumeric key {0} pressed'.format(
                 key.char))
-            self.updateVanillaDictObject(key)
             self.refreshAndUpdateDataFromRedisDB(key)
             self.updateDBValues()
-            self.putDataOnElasticIndex()
+            self.updateElasticDictObject(key)
+            self.updateElasticIndexes()
 
         except AttributeError:
             self.logger.error('special key {0} pressed'.format(
@@ -63,12 +42,19 @@ class KeysListnerObject():
                 on_press=self.on_press,
                 on_release=self.on_release) as listener:
             listener.join()
-        
-    def updateVanillaDictObject(self,key):
-        if(key.char in self.alphabetElastic):
-            self.alphabetElastic[key.char] = self.alphabetElastic[key.char] + 1
+
+    #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
+    def refreshAndUpdateDataFromRedisDB(self,key):
+        if(self.r.isKeyExists(self.dateManager.getDate())):
+            result = self.r.getValue(self.dateManager.getDate())
+            self.alphabet = result
+            if(key.char in self.alphabet):
+                self.alphabet[key.char] = self.alphabet[key.char] + 1
+            else:
+                self.alphabet[key.char] = 1
         else:
-            self.alphabetElastic[key.char] = 1
+            self.alphabet = {}
+        self.queue.put(self.alphabet)
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
@@ -76,10 +62,26 @@ class KeysListnerObject():
                                 self.queue)
         self.logger.info("on KeyListener ->updateDBValues-> self.alphabet: ")
         self.logger.info(self.alphabet)
+    
+    # get the data from elastic to this object when the code is loading to continue the consisntent of the data
+    def refreshAndUpdateDataFromElastic(self):
+        result = self.e.getData(self.keyListenerElasticIndex, self.elasticDocId)
+        if(result != None):
+            self.alphabetElastic = result
+        else:
+            self.alphabetElastic = {}
 
-    def putDataOnElasticIndex(self):
+    # update the elastic object with the current values 
+    def updateElasticDictObject(self,key):
+        if(key.char in self.alphabetElastic):
+            self.alphabetElastic[key.char] = self.alphabetElastic[key.char] + 1
+        else:
+            self.alphabetElastic[key.char] = 1
+
+    # update the elastic index document with the object details of this class
+    def updateElasticIndexes(self):
         self.e.putDataOnIndex(self.keyListenerElasticIndex,self.alphabetElastic,self.elasticDocId)
-        
+
 # Collect events until released
 # if __name__ == '__main__':
 #     klo = KeysListnerObject()

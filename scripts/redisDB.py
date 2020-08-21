@@ -2,6 +2,20 @@ import redis
 import logging
 import json
 
+
+
+# the key will be the date of today.
+# the data will be as below, every class that will save data will be inside of some data structure.
+# the keys are the diffrents betweens the classes exclude the alphabet counter which conatin a alphabet key and value of int that count the time of presses.
+
+# data = {
+#     "10/8/2020": {
+#     a:1,
+#     b:2,
+#     cpu:[60,50,30,20,50],
+#     clipboard:[some,text,that,copied]
+#    }
+# }
 class redisDB:
 
     #init redis DB
