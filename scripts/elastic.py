@@ -27,11 +27,15 @@ class Elastic:
 
     
     def getData(self,indexValue,docId):
-        res = self.es.get(index=indexValue,id = docId) 
-        #equal to:
-        # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
-        self.logger.info("elastic data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
-        result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
+        result = None
+        index_exists = self.es.indices.exists(index=indexValue)
+        if(index_exists == True):
+            res = self.es.get(index=indexValue,id = docId) 
+            #equal to:
+            # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
+            self.logger.info("elastic data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
+            result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
+        return result
         
 
 

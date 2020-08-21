@@ -10,8 +10,8 @@ class KeysListnerObject():
         self.r = redis
         self.queue = queue
         self.e = elastic
-        self.alphabetElastic = {}
         self.elasticDocId = "keylistener"
+        self.refreshAndUpdateDataFromElastic()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
     def refreshAndUpdateDataFromRedisDB(self,key):
@@ -25,6 +25,15 @@ class KeysListnerObject():
         else:
             self.alphabet = {}
         self.queue.put(self.alphabet)
+
+    def refreshAndUpdateDataFromElastic(self):
+        result = self.e.getData(self.dateManager.getDateWithoutSpecialCharsForElastic(),self.elasticDocId)
+        if(result != None):
+            self.alphabetElastic = result
+        else:
+            self.alphabetElastic = {}
+
+
 
     #take every key that presses and insert him to dict object which mapping the chars.
     def on_press(self,key):
