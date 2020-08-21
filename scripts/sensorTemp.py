@@ -53,7 +53,7 @@ class temperature():
             # self.insertToDict(result)
             self.refreshAndUpdateDataFromRedisDB(result)
             self.updateDBValues()
-            self.tempDictElastic.append(result)
+            self.tempDictElastic[temperature.TEMPERATURE_KEY].append(result)
             self.putDataOnElasticIndex()
 
     #insert and update the dict object on DB where the key is date.
