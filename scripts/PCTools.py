@@ -25,7 +25,7 @@ def main():
     r = redisDB()
     e = Elastic(logger)
     klo = KeysListnerObject(logger,dateManager,r,q,e)
-    t = temperature(logger,dateManager,r,q)
+    t = temperature(logger,dateManager,r,q,e)
     cb = ClipBoard(logger,dateManager,r,q)
 
     threading.Thread(target=klo.run, args=[]).start()

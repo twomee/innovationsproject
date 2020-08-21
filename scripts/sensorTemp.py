@@ -8,11 +8,17 @@ class temperature():
     LINUX_COMMAND = 'osx-cpu-temp'
     #init the vars, will contain dict with key of cpu and values of list with temperature of the cpu:
     #{'cpu':[60,50.5,70.3]}
-    def __init__(self,logger,dateManager,redis,queue):
+    def __init__(self,logger,dateManager,redis,queue,elastic):
         self.logger = logger
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
+        self.e = elastic
+        self.elasticDocId = "temperature"
+        self.temperatureElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId
+        self.refreshAndUpdateDataFromElastic()
+
+
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
     def refreshAndUpdateDataFromRedisDB(self,data):
@@ -28,6 +34,14 @@ class temperature():
             self.tempDict[temperature.TEMPERATURE_KEY] = [data]
         self.queue.put(self.tempDict)
 
+    def refreshAndUpdateDataFromElastic(self):
+        result = self.e.getData(self.temperatureElasticIndex, self.elasticDocId)
+        if(result != None):
+            self.tempDictElastic = result
+        else:
+            self.tempDictElastic = {}
+            self.tempDictElastic[temperature.TEMPERATURE_KEY] = []
+
 
     #call to subprocess and do linux command. taking the output and insert it to the dict object. this occurs every 1 minute
     def cpuTemp(self):
@@ -38,8 +52,9 @@ class temperature():
             # self.logger.info("CPU temperature is " + result)
             # self.insertToDict(result)
             self.refreshAndUpdateDataFromRedisDB(result)
-            print(self.tempDict)
             self.updateDBValues()
+            self.tempDictElastic.append(result)
+            self.putDataOnElasticIndex()
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
@@ -47,6 +62,9 @@ class temperature():
                                 self.queue)
         self.logger.info("on temperature ->updateDBValues-> self.tempDict: ")
         self.logger.info(self.tempDict)
+
+    def putDataOnElasticIndex(self):
+        self.e.putDataOnIndex(self.temperatureElasticIndex,self.tempDictElastic,self.elasticDocId)
 
 
 # t = temperature()

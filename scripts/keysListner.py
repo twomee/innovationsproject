@@ -11,6 +11,7 @@ class KeysListnerObject():
         self.queue = queue
         self.e = elastic
         self.elasticDocId = "keylistener"
+        self.keyListenerElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId
         self.refreshAndUpdateDataFromElastic()
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
@@ -27,7 +28,7 @@ class KeysListnerObject():
         self.queue.put(self.alphabet)
 
     def refreshAndUpdateDataFromElastic(self):
-        result = self.e.getData(self.dateManager.getDateWithoutSpecialCharsForElastic(),self.elasticDocId)
+        result = self.e.getData(self.keyListenerElasticIndex, self.elasticDocId)
         if(result != None):
             self.alphabetElastic = result
         else:
@@ -77,7 +78,8 @@ class KeysListnerObject():
         self.logger.info(self.alphabet)
 
     def putDataOnElasticIndex(self):
-        self.e.putDataOnIndex(self.dateManager.getDateWithoutSpecialCharsForElastic(),self.alphabetElastic,self.elasticDocId)
+        self.e.putDataOnIndex(self.keyListenerElasticIndex,self.alphabetElastic,self.elasticDocId)
+        
 # Collect events until released
 # if __name__ == '__main__':
 #     klo = KeysListnerObject()
