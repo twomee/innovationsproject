@@ -28,7 +28,7 @@ class Elastic:
 
     # insert/update index in elastic with index and id values
     def putDataOnIndex(self,indexValue,obj,docId):
-        self.logger.info("updating document in index")
+        self.logger.info("ELASTIC ==> updating document in index")
         res = self.es.index(index=indexValue,body=json.dumps(obj),id = docId)
         res =self.getData(indexValue,docId)
 
@@ -41,7 +41,7 @@ class Elastic:
             res = self.es.get(index=indexValue,id = docId) 
             #equal to:
             # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
-            self.logger.info("elastic data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
+            self.logger.info("ELASTIC ==> data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
             result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
         return result
         

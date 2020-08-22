@@ -7,6 +7,7 @@ from sensorTemp import temperature
 from DateManager import DateManager
 from redisDB import redisDB
 from elastic import Elastic
+from mongoDB import mongoDB
 import queue
 # from .Project import keyboardMouseListener
 
@@ -24,7 +25,8 @@ def main():
     dateManager = DateManager()
     r = redisDB()
     e = Elastic(logger)
-    klo = KeysListnerObject(logger,dateManager,r,q,e)
+    m = mongoDB(logger)
+    klo = KeysListnerObject(logger,dateManager,r,q,e,m)
     t = temperature(logger,dateManager,r,q,e)
     cb = ClipBoard(logger,dateManager,r,q,e)
 

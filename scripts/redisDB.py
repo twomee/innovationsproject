@@ -30,25 +30,25 @@ class redisDB:
             error_count = 0
             while error_count != -1:
                 try:
-                    logging.info("started redis insert")
+                    logging.info("REDISDB ==> started redis insert")
                     # Get available inventory, watching for changes
                     # related to this itemid before the transaction
                     pipe.watch(date)
-                    logging.info("started watch")
+                    logging.info("REDISDB ==> started watch")
                     pipe.multi()
                     #we inserting the data as json object to support complex structures
                     pipe.set(date,json.dumps(queue.get()))
-                    logging.info("setted values on db")
+                    logging.info("REDISDB ==> etted values on db")
                     pipe.execute()
                     error_count = -1
-                    logging.info("executeed insert")
+                    logging.info("REDISDB ==> executeed insert")
                 except redis.WatchError:
                     # Log total num. of errors where trying to set a new value to existing key.
                     # if some module trying to update same key, the object is locked by watch
                     # then try the same process again of WATCH/SET/MULTI/EXEC
                     error_count += 1
                     logging.warning(
-                        "WatchError #%d: %s; retrying",
+                        "REDISDB ==> WatchError #%d: %s; retrying",
                         error_count, date
                         )
         return None
