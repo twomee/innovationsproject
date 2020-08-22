@@ -25,10 +25,13 @@ class mongoDB:
         print("!$#%#$&&#$*&#%*$%&@#$&^$@*$%^*(%#$^",result )
         self.logger.info('MONGODB ==> One doc: {0}'.format(result))
 
-
     def retrieveDocument(self,docId,key):
-        doc = self.db[docId].find_one({"name":key})
+        doc = self.db[docId].find_one({"name":key},{'_id': False})
         self.logger.info("MONGODB ==> document value: ", doc)
         return doc
+
+    def deleteDocument(self,docId):
+        self.db[docId].drop()
+
 
  

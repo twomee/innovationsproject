@@ -26,8 +26,9 @@ class KeysListnerObject():
                 key.char))
             self.refreshAndUpdateDataFromRedisDB(key)
             self.updateDBValues()
-            self.updateElasticDictObject(key)
-            self.updateElasticIndexes()
+            if(key.char != "."): #unknown error happen when inserting dot to the dict
+                self.updateElasticDictObject(key)
+                self.updateElasticIndexes()
             self.updateMongoDictObject(key)
             self.updateMongoDBValues()
 
@@ -94,13 +95,16 @@ class KeysListnerObject():
         result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
         print("!!!!!!!!!!!!" , result)
         if(result != None):
+            print("in if")
             self.alphabetMognoDB = result
         else:
+            print("in else")
             self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
+        # self.m.deleteDocument(self.NoSqlDocId)
 
     def updateMongoDictObject(self,key):
-        if(key.char in self.alphabetMognoDB):
-            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
+        if(key.char in self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY]):
+            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEYa][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
         else:
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
         print("#################", self.alphabetMognoDB)

@@ -28,9 +28,15 @@ class Elastic:
 
     # insert/update index in elastic with index and id values
     def putDataOnIndex(self,indexValue,obj,docId):
-        self.logger.info("ELASTIC ==> updating document in index")
-        res = self.es.index(index=indexValue,body=json.dumps(obj),id = docId)
-        res =self.getData(indexValue,docId)
+        try:
+            self.logger.info("ELASTIC ==> updating document in index")
+            print(json.dumps(obj))
+            res = self.es.index(index=indexValue,body=json.dumps(obj),id = docId)
+        except Exception as e:
+            self.logger.error("ELASTIC ==> There was an error on inserting to index==>",e)
+            res =self.getData(indexValue,docId)
+            res = self.es.index(index=indexValue,body=json.dumps(res),id = docId)
+
 
     #check if the index exist and then get the doc with same id(which identify to which class its belong) and the index we want.
     # then we take the speicific part of the json which is the body to our model.
