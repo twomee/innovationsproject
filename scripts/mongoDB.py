@@ -27,7 +27,7 @@ class mongoDB:
 
 
     def retrieveDocument(self,docId,key):
-        doc = self.db[docId].find({"name":key})
+        doc = self.db[docId].find_one({"name":key})
         self.logger.info("MONGODB ==> document value: ", doc)
         return doc
 
