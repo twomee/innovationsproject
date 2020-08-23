@@ -85,6 +85,7 @@ class KeysListnerObject():
             self.alphabetElastic[key.char] = self.alphabetElastic[key.char] + 1
         else:
             self.alphabetElastic[key.char] = 1
+        self.logger.info("ELASTIC ==> self.alphabetElastic: ", self.alphabetElastic)
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self):
@@ -93,24 +94,23 @@ class KeysListnerObject():
 
     def refreshAndUpdateDataFromMongoDB(self):
         result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
-        print("!!!!!!!!!!!!" , result)
         if(result != None):
             print("in if")
             self.alphabetMognoDB = result
         else:
             print("in else")
             self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
-        # self.m.deleteDocument(self.NoSqlDocId)
 
     def updateMongoDictObject(self,key):
         if(key.char in self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY]):
-            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEYa][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
+            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
         else:
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
-        print("#################", self.alphabetMognoDB)
+        self.logger.info("MONGODB ==> self.alphabetElastic: ", self.alphabetMognoDB)
+
 
     def updateMongoDBValues(self):
-        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.alphabetMognoDB)
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY])
 
 # Collect events until released
 # if __name__ == '__main__':
