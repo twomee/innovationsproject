@@ -95,10 +95,8 @@ class KeysListnerObject():
     def refreshAndUpdateDataFromMongoDB(self):
         result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
         if(result != None):
-            print("in if")
             self.alphabetMognoDB = result
         else:
-            print("in else")
             self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
 
     def updateMongoDictObject(self,key):
@@ -106,7 +104,7 @@ class KeysListnerObject():
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
         else:
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
-        self.logger.info("MONGODB ==> self.alphabetElastic: ", self.alphabetMognoDB)
+        self.logger.info("MONGODB ==> self.alphabetMognoDB: ", self.alphabetMognoDB)
 
 
     def updateMongoDBValues(self):

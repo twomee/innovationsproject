@@ -6,16 +6,19 @@ class ClipBoard():
     CLIPBOARD_KEY = "clipboard"
     #init the vars, will contain dict where the key is the word 'clipboard' and the values are the texts that copied to clipboard:
     #{'clipboard':['some text that copied','some more text that copied']}
-    def __init__(self,logger,dateManager,redis,queue,elastic):
+    def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
         self.logger = logger
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
         self.pasteboard = AppKit.NSPasteboard.generalPasteboard()
         self.e = elastic
-        self.elasticDocId = ClipBoard.CLIPBOARD_KEY # id of the class for elastic
-        self.clipboardElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId #index of elastic for this class
+        self.m = mongo
+        self.NoSqlDocId = ClipBoard.CLIPBOARD_KEY # id of the class for elastic
+        self.keyListenerElasticIndexAndMongoDocId = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.NoSqlDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic() 
+        self.refreshAndUpdateDataFromMongoDB()
+
 
 
     #take the text that copy to clipboard and insert him to DB only when he get changed. alwayes listen to changes by loop
@@ -33,6 +36,7 @@ class ClipBoard():
                     self.refreshAndUpdateDataFromRedisDB(pasteboardString)
                     self.updatreDBValues()
                     self.updateElasticIndexes(pasteboardString)
+                    self.updateMongoDBValues(pasteboardString)
             except Exception as error:
                 self.logger.error(error)
 
@@ -60,7 +64,7 @@ class ClipBoard():
 
     # get the data from elastic to this object when the code is loading to continue the consisntent of the data
     def refreshAndUpdateDataFromElastic(self):
-        result = self.e.getData(self.clipboardElasticIndex, self.elasticDocId)
+        result = self.e.getData(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
         if(result != None):
             self.clipboardDictElastic = result
         else:
@@ -70,9 +74,21 @@ class ClipBoard():
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
         self.clipboardDictElastic[ClipBoard.CLIPBOARD_KEY].append(result)
-        self.e.putDataOnIndex(self.clipboardElasticIndex,self.clipboardDictElastic,self.elasticDocId)
+        self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.clipboardDictElastic,self.NoSqlDocId)
 
-                                
+
+
+    def refreshAndUpdateDataFromMongoDB(self):
+        result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
+        if(result != None):
+            self.clipboardDictMongo = result
+        else:
+            self.clipboardDictMongo = {}
+            self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY] = [] 
+
+    def updateMongoDBValues(self,result):
+        self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY].append(result)
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY])                            
 # if __name__ == '__main__':
 #     cb = ClipBoard()
 #     cb.copyFromClipBoard()

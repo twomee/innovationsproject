@@ -28,7 +28,7 @@ def main():
     m = mongoDB(logger)
     klo = KeysListnerObject(logger,dateManager,r,q,e,m)
     t = temperature(logger,dateManager,r,q,e)
-    cb = ClipBoard(logger,dateManager,r,q,e)
+    cb = ClipBoard(logger,dateManager,r,q,e,m)
 
     threading.Thread(target=klo.run, args=[]).start()
     threading.Thread(target=t.cpuTemp, args=[]).start()
