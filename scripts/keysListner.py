@@ -91,13 +91,14 @@ class KeysListnerObject():
     def updateElasticIndexes(self):
         self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.alphabetElastic,self.NoSqlDocId)
 
-
+    #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
     def refreshAndUpdateDataFromMongoDB(self):
         result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
         if(result != None):
             self.alphabetMognoDB = result
         else:
             self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
+
 
     def updateMongoDictObject(self,key):
         if(key.char in self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY]):
@@ -106,7 +107,7 @@ class KeysListnerObject():
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
         self.logger.info("MONGODB ==> self.alphabetMognoDB: ", self.alphabetMognoDB)
 
-
+    #insert and update the dict object on DB.
     def updateMongoDBValues(self):
         self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY])
 

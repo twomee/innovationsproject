@@ -1,5 +1,4 @@
 import redis
-import logging
 import json
 
 
@@ -19,7 +18,8 @@ import json
 class redisDB:
 
     #init redis DB
-    def __init__(self):
+    def __init__(self,logger):
+        self.logger = logger
         self.r = redis.Redis()
 
     # set value to object on redis DB with transactional action.
@@ -30,24 +30,24 @@ class redisDB:
             error_count = 0
             while error_count != -1:
                 try:
-                    logging.info("REDISDB ==> started redis insert")
+                    self.logger.info("REDISDB ==> started redis insert")
                     # Get available inventory, watching for changes
                     # related to this itemid before the transaction
                     pipe.watch(date)
-                    logging.info("REDISDB ==> started watch")
+                    self.logger.info("REDISDB ==> started watch")
                     pipe.multi()
                     #we inserting the data as json object to support complex structures
                     pipe.set(date,json.dumps(queue.get()))
-                    logging.info("REDISDB ==> etted values on db")
+                    self.logger.info("REDISDB ==> etted values on db")
                     pipe.execute()
                     error_count = -1
-                    logging.info("REDISDB ==> executeed insert")
+                    self.logger.info("REDISDB ==> executeed insert")
                 except redis.WatchError:
                     # Log total num. of errors where trying to set a new value to existing key.
                     # if some module trying to update same key, the object is locked by watch
                     # then try the same process again of WATCH/SET/MULTI/EXEC
                     error_count += 1
-                    logging.warning(
+                    self.logger.warning(
                         "REDISDB ==> WatchError #%d: %s; retrying",
                         error_count, date
                         )

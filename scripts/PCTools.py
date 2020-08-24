@@ -23,11 +23,11 @@ def main():
     # absPath = pathlib.Path().absolute()
     # print(absPath)
     dateManager = DateManager()
-    r = redisDB()
+    r = redisDB(logger)
     e = Elastic(logger)
     m = mongoDB(logger)
     klo = KeysListnerObject(logger,dateManager,r,q,e,m)
-    t = temperature(logger,dateManager,r,q,e)
+    t = temperature(logger,dateManager,r,q,e,m)
     cb = ClipBoard(logger,dateManager,r,q,e,m)
 
     threading.Thread(target=klo.run, args=[]).start()

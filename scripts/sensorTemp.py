@@ -6,17 +6,21 @@ class temperature():
     TEMPERATURE_KEY = "cpu"
     DECODE_TYPE = 'utf-8'
     LINUX_COMMAND = 'osx-cpu-temp'
+    MONGO_OBJECT_ID_KEY = "name"
+    MONGO_OBJECT_DATA_KEY = "data"
     #init the vars, will contain dict with key of cpu and values of list with temperature of the cpu:
     #{'cpu':[60,50.5,70.3]}
-    def __init__(self,logger,dateManager,redis,queue,elastic):
+    def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
         self.logger = logger
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
         self.e = elastic
-        self.elasticDocId = temperature.TEMPERATURE_KEY # id of the class for elastic
-        self.temperatureElasticIndex = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.elasticDocId #index of elastic for this class
+        self.m = mongo
+        self.NoSqlDocId = temperature.TEMPERATURE_KEY # id of the class for elastic
+        self.keyListenerElasticIndexAndMongoDocId = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.NoSqlDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic()
+        self.refreshAndUpdateDataFromMongoDB()
 
     #call to subprocess and do linux command. taking the output and insert it to the dict object. this occurs every 1 minute
     def cpuTemp(self):
@@ -29,6 +33,8 @@ class temperature():
             self.refreshAndUpdateDataFromRedisDB(result)
             self.updateDBValues()
             self.updateElasticIndexes(result)
+            self.updateMongoDBValues(result)
+
 
     #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
     def refreshAndUpdateDataFromRedisDB(self,data):
@@ -53,7 +59,7 @@ class temperature():
 
     # get the data from elastic to this object when the code is loading to continue the consisntent of the data
     def refreshAndUpdateDataFromElastic(self):
-        result = self.e.getData(self.temperatureElasticIndex, self.elasticDocId)
+        result = self.e.getData(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
         if(result != None):
             self.tempDictElastic = result
         else:
@@ -63,7 +69,22 @@ class temperature():
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
         self.tempDictElastic[temperature.TEMPERATURE_KEY].append(result)
-        self.e.putDataOnIndex(self.temperatureElasticIndex,self.tempDictElastic,self.elasticDocId)
+        self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.tempDictElastic,self.NoSqlDocId)
+
+
+    #check if there is data in DB. if so, take the data and append the new data to the object. else, start new dict
+    def refreshAndUpdateDataFromMongoDB(self):
+        result = self.m.retrieveDocument(self.keyListenerElasticIndexAndMongoDocId, self.NoSqlDocId)
+        if(result != None):
+            self.tempDictMongo = result
+        else:
+            self.tempDictMongo = {temperature.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, temperature.MONGO_OBJECT_DATA_KEY : [] }
+
+
+    #insert and update the dict object on DB.
+    def updateMongoDBValues(self,result):
+        self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY].append(result)
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY])
 
 # t = temperature()
 # t.cpuTemp()
