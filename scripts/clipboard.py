@@ -4,6 +4,8 @@ import AppKit
 class ClipBoard():
 
     CLIPBOARD_KEY = "clipboard"
+    MONGO_OBJECT_ID_KEY = "name"
+    MONGO_OBJECT_DATA_KEY = "data"
     #init the vars, will contain dict where the key is the word 'clipboard' and the values are the texts that copied to clipboard:
     #{'clipboard':['some text that copied','some more text that copied']}
     def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
@@ -83,12 +85,13 @@ class ClipBoard():
         if(result != None):
             self.clipboardDictMongo = result
         else:
-            self.clipboardDictMongo = {}
-            self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY] = [] 
+            self.clipboardDictMongo = {ClipBoard.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, ClipBoard.MONGO_OBJECT_DATA_KEY : [] }
+
 
     def updateMongoDBValues(self,result):
-        self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY].append(result)
-        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.clipboardDictMongo[ClipBoard.CLIPBOARD_KEY])                            
+        self.logger.info(self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY])
+        self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY].append(result)
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY])                            
 # if __name__ == '__main__':
 #     cb = ClipBoard()
 #     cb.copyFromClipBoard()
