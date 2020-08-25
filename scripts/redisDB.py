@@ -55,11 +55,12 @@ class redisDB:
 
     #get value from redis DB by key which is the date of today
     def getValue(self,key):
-        #we loading the data with json module because maybe the structure is complex
-        result = json.loads(self.r.get(key))
-        #if there is no data from DB(new day)
-        if(result is None):
-            return None
+        result = None
+        try:
+            #we loading the data with json module because maybe the structure is complex
+            result = json.loads(self.r.get(key))
+        except Exception as e:
+            self.logger.warning("REDISDB ==> error on get value from Redis")
         return result
         
     #check if key exists on redis DB

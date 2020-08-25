@@ -20,16 +20,23 @@ class mongoDB:
 
     # update or insert new(if not exist) the data to the same object by key name which is 'name'
     def updateNewOrExistDocument(self,docId,key,data):
-        document = self.db[docId] # specifies which collection you’ll be using 
-        filter = { 'name': key } 
-        newvalues = { "$set": { "data": data } } 
-        result = self.db[docId].find_one_and_update(filter,newvalues,upsert=True,new = True) #filter means takes the document with key in filter and update the same object with the newvalues we set above. upsert means if document doesnt exists, create new one
-        self.logger.info('MONGODB ==> One doc: {0}'.format(result))
+        try:
+            document = self.db[docId] # specifies which collection you’ll be using 
+            filter = { 'name': key } 
+            newvalues = { "$set": { "data": data } } 
+            result = self.db[docId].find_one_and_update(filter,newvalues,upsert=True,new = True) #filter means takes the document with key in filter and update the same object with the newvalues we set above. upsert means if document doesnt exists, create new one
+            self.logger.info('MONGODB ==> One doc updated: {0}'.format(result))
+        except Exception as e:
+            self.logger.error('MONGODB ==> error on updating document')
 
     # get the value of dict with key name of key parameter
     def retrieveDocument(self,docId,key):
-        doc = self.db[docId].find_one({"name":key},{'_id': False})
-        self.logger.info("MONGODB ==> document value: ", doc)
+        doc = None
+        try:
+            doc = self.db[docId].find_one({"name":key},{'_id': False})
+            self.logger.info("MONGODB ==> document value: ", doc)
+        except Exception as e:
+            self.logger.error('MONGODB ==> error on retrieve document')   
         return doc
 
     # delete document

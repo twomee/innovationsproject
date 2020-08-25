@@ -42,13 +42,16 @@ class Elastic:
     # then we take the speicific part of the json which is the body to our model.
     def getData(self,indexValue,docId):
         result = None
-        index_exists = self.es.indices.exists(index=indexValue)
-        if(index_exists == True):
-            res = self.es.get(index=indexValue,id = docId) 
-            #equal to:
-            # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
-            self.logger.info("ELASTIC ==> data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
-            result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
+        try:
+            index_exists = self.es.indices.exists(index=indexValue)
+            if(index_exists == True):
+                res = self.es.get(index=indexValue,id = docId) 
+                #equal to:
+                # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
+                self.logger.info("ELASTIC ==> data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
+                result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
+        except Exception as e:
+            self.logger.error("ELASTIC ==> error on getting index data from Elastic")
         return result
         
 

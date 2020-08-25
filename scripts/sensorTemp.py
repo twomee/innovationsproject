@@ -48,7 +48,9 @@ class temperature():
         else:
             self.tempDict = {}
             self.tempDict[temperature.TEMPERATURE_KEY] = [data]
+            self.logger.info("REDISDB ==> initalize tempDict: " + str(self.tempDict))
         self.queue.put(self.tempDict)
+        self.logger.info("REDISDB ==> update self.tempDict: " + str(self.tempDict))
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
@@ -65,10 +67,12 @@ class temperature():
         else:
             self.tempDictElastic = {}
             self.tempDictElastic[temperature.TEMPERATURE_KEY] = []
+            self.logger.info("ELASTIC ==> initalize tempDictElastic: " + str(self.tempDictElastic))
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
         self.tempDictElastic[temperature.TEMPERATURE_KEY].append(result)
+        self.logger.info("ELASTIC ==> update tempDictElastic: " + str(self.tempDictElastic))
         self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.tempDictElastic,self.NoSqlDocId)
 
 
@@ -79,11 +83,13 @@ class temperature():
             self.tempDictMongo = result
         else:
             self.tempDictMongo = {temperature.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, temperature.MONGO_OBJECT_DATA_KEY : [] }
+            self.logger.info("MONGODB ==> initalize tempDictMongo: " + str(self.tempDictMongo))
 
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self,result):
         self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY].append(result)
+        self.logger.info("MONGODB ==> update tempDictMongo: " + str(self.tempDictMongo))
         self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY])
 
 # t = temperature()

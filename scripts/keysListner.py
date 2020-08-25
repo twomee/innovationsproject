@@ -5,6 +5,7 @@ class KeysListnerObject():
 
     MONGO_OBJECT_ID_KEY = "name"
     MONGO_OBJECT_DATA_KEY = "data"
+    KEYLISTENER_KEY = "keylistener"
     #init the vars, will contain dict which count the nubmers of times every char was pressed:
     #{'a':1,'b':2,'c':10,'d':0}
     def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
@@ -14,7 +15,7 @@ class KeysListnerObject():
         self.queue = queue
         self.e = elastic
         self.m = mongo
-        self.NoSqlDocId = "keylistener" # id of the class for elastic
+        self.NoSqlDocId =  KeysListnerObject.KEYLISTENER_KEY # id of the class for elastic
         self.keyListenerElasticIndexAndMongoDocId = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.NoSqlDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic()
         self.refreshAndUpdateDataFromMongoDB()
@@ -60,9 +61,13 @@ class KeysListnerObject():
                 self.alphabet[key.char] = self.alphabet[key.char] + 1
             else:
                 self.alphabet[key.char] = 1
+                self.logger.info("REDISDB ==> initalize alphabet: " + str(self.alphabet))
         else:
             self.alphabet = {}
+            self.logger.info("REDISDB ==> initalize alphabet: " + str(self.alphabet))
         self.queue.put(self.alphabet)
+        self.logger.info("REDISDB ==> update self.alphabet: " + str(self.alphabet))
+
 
     #insert and update the dict object on DB where the key is date.
     def updateDBValues(self):
@@ -78,6 +83,8 @@ class KeysListnerObject():
             self.alphabetElastic = result
         else:
             self.alphabetElastic = {}
+            self.logger.info("ELASTIC ==> initalize alphabetElastic: " + str(self.alphabetElastic))
+
 
     # update the elastic object with the current values 
     def updateElasticDictObject(self,key):
@@ -85,7 +92,7 @@ class KeysListnerObject():
             self.alphabetElastic[key.char] = self.alphabetElastic[key.char] + 1
         else:
             self.alphabetElastic[key.char] = 1
-        self.logger.info("ELASTIC ==> self.alphabetElastic: ", self.alphabetElastic)
+        self.logger.info("ELASTIC ==> update alphabetElastic: " + str(self.alphabetElastic))
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self):
@@ -98,14 +105,14 @@ class KeysListnerObject():
             self.alphabetMognoDB = result
         else:
             self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
-
+            self.logger.info("MONGODB ==> initalize alphabetMognoDB: " + str(self.alphabetMognoDB))
 
     def updateMongoDictObject(self,key):
         if(key.char in self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY]):
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
         else:
             self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
-        self.logger.info("MONGODB ==> self.alphabetMognoDB: ", self.alphabetMognoDB)
+        self.logger.info("MONGODB ==> update alphabetMognoDB: " + str(self.alphabetMognoDB))
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self):

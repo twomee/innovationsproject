@@ -1,6 +1,7 @@
 import keyboard
 import AppKit
 
+
 class ClipBoard():
 
     CLIPBOARD_KEY = "clipboard"
@@ -54,7 +55,9 @@ class ClipBoard():
         else:
             self.clipboardDict = {}
             self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
+            self.logger.info("REDISDB ==> initalize clipboardDict: " + str(self.clipboardDict))
         self.queue.put(self.clipboardDict)
+        self.logger.info("REDISDB ==> update self.clipboardDict: " + str(self.clipboardDict))
 
     #insert and update the dict object on DB where the key is date.
     def updatreDBValues(self):
@@ -72,10 +75,13 @@ class ClipBoard():
         else:
             self.clipboardDictElastic = {}
             self.clipboardDictElastic[ClipBoard.CLIPBOARD_KEY] = [] 
+            self.logger.info("ELASTIC ==> initalize clipboardDictElastic: " + str(self.clipboardDictElastic))
+
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
         self.clipboardDictElastic[ClipBoard.CLIPBOARD_KEY].append(result)
+        self.logger.info("ELASTIC ==> update clipboardDictElastic: " + str(self.clipboardDictElastic))
         self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.clipboardDictElastic,self.NoSqlDocId)
 
 
@@ -86,10 +92,12 @@ class ClipBoard():
             self.clipboardDictMongo = result
         else:
             self.clipboardDictMongo = {ClipBoard.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, ClipBoard.MONGO_OBJECT_DATA_KEY : [] }
+            self.logger.info("MONGODB ==> initalize clipboardDictMongo: " + str(self.clipboardDictMongo))
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self,result):
         self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY].append(result)
+        self.logger.info("MONGODB ==> update clipboardDictMongo: " + str(self.clipboardDictMongo))
         self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY])                            
 # if __name__ == '__main__':
 #     cb = ClipBoard()
