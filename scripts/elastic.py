@@ -17,14 +17,19 @@ import json
 # if we indexing same data with diffrent id, it will create a new doc sequnece and cause a mess.
 # every calss that called to elastic have its own id that give when call to the function on this class.
 class Elastic:
-    HOST = 'localhost'
-    PORT = 9200
-    ELASTIC_DATA_HEADER_NAME = '_source'
 
     #init the variables of elasic
-    def __init__(self,logger):
-        self.es = Elasticsearch([{'host': Elastic.HOST, 'port': Elastic.PORT}])
+    def __init__(self,logger,propertiesLoader):
         self.logger = logger
+        self.propertiesLoader = propertiesLoader
+        self.initalizeProperties()
+        self.es = Elasticsearch([{'host': self.ELASTIC_HOST, 'port': self.ELASTIC_PORT}])
+
+    def initalizeProperties(self):
+        self.ELASTIC_HOST = self.propertiesLoader.getProperty("ELASTIC_HOST")
+        self.ELASTIC_PORT = self.propertiesLoader.getProperty("ELASTIC_PORT")
+        self.ELASTIC_DATA_HEADER_NAME = self.propertiesLoader.getProperty("ELASTIC_DATA_HEADER_NAME")
+        self.logger.info("on Elastic -> properties initalized")
 
     # insert/update index in elastic with index and id values
     def putDataOnIndex(self,indexValue,obj,docId):
@@ -49,7 +54,7 @@ class Elastic:
                 #equal to:
                 # self.es.search(index=indexValue,body={"query":{ "ids":{ "values": [ docId ] } } })
                 self.logger.info("ELASTIC ==> data of index: " + indexValue + " with id: " + docId + " is: " + str(res))
-                result = res[Elastic.ELASTIC_DATA_HEADER_NAME]
+                result = res[self.ELASTIC_DATA_HEADER_NAME]
         except Exception as e:
             self.logger.error("ELASTIC ==> error on getting index data from Elastic")
         return result

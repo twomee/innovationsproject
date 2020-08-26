@@ -9,8 +9,10 @@ class ClipBoard():
     MONGO_OBJECT_DATA_KEY = "data"
     #init the vars, will contain dict where the key is the word 'clipboard' and the values are the texts that copied to clipboard:
     #{'clipboard':['some text that copied','some more text that copied']}
-    def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
+    def __init__(self,logger,dateManager,redis,queue,elastic,mongo,propertiesLoader):
         self.logger = logger
+        self.propertiesLoader = propertiesLoader
+        self.initalizeProperties()
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
@@ -22,7 +24,11 @@ class ClipBoard():
         self.refreshAndUpdateDataFromElastic() 
         self.refreshAndUpdateDataFromMongoDB()
 
-
+    def initalizeProperties(self):
+        self.CLIPBOARD_KEY = self.propertiesLoader.getProperty("CLIPBOARD_KEY")
+        self.MONGO_OBJECT_ID_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_ID_KEY")
+        self.MONGO_OBJECT_DATA_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_DATA_KEY")
+        self.logger.info("on ClipBoard -> properties initalized")
 
     #take the text that copy to clipboard and insert him to DB only when he get changed. alwayes listen to changes by loop
     def copyFromClipBoard(self):
@@ -48,13 +54,13 @@ class ClipBoard():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result =  self.r.getValue(self.dateManager.getDate())
             self.clipboardDict = result
-            if(self.clipboardDict.get(ClipBoard.CLIPBOARD_KEY) is None):
-                self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
+            if(self.clipboardDict.get(self.NoSqlDocId) is None):
+                self.clipboardDict[self.NoSqlDocId] = [data]
             else:
-                self.clipboardDict[ClipBoard.CLIPBOARD_KEY].append(data)
+                self.clipboardDict[self.NoSqlDocId].append(data)
         else:
             self.clipboardDict = {}
-            self.clipboardDict[ClipBoard.CLIPBOARD_KEY] = [data]
+            self.clipboardDict[self.NoSqlDocId] = [data]
             self.logger.info("REDISDB ==> initalize clipboardDict: " + str(self.clipboardDict))
         self.queue.put(self.clipboardDict)
         self.logger.info("REDISDB ==> update self.clipboardDict: " + str(self.clipboardDict))
@@ -74,13 +80,13 @@ class ClipBoard():
             self.clipboardDictElastic = result
         else:
             self.clipboardDictElastic = {}
-            self.clipboardDictElastic[ClipBoard.CLIPBOARD_KEY] = [] 
+            self.clipboardDictElastic[self.NoSqlDocId] = [] 
             self.logger.info("ELASTIC ==> initalize clipboardDictElastic: " + str(self.clipboardDictElastic))
 
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
-        self.clipboardDictElastic[ClipBoard.CLIPBOARD_KEY].append(result)
+        self.clipboardDictElastic[self.NoSqlDocId].append(result)
         self.logger.info("ELASTIC ==> update clipboardDictElastic: " + str(self.clipboardDictElastic))
         self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.clipboardDictElastic,self.NoSqlDocId)
 
@@ -91,12 +97,12 @@ class ClipBoard():
         if(result != None):
             self.clipboardDictMongo = result
         else:
-            self.clipboardDictMongo = {ClipBoard.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, ClipBoard.MONGO_OBJECT_DATA_KEY : [] }
+            self.clipboardDictMongo = {self.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, self.MONGO_OBJECT_DATA_KEY : [] }
             self.logger.info("MONGODB ==> initalize clipboardDictMongo: " + str(self.clipboardDictMongo))
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self,result):
-        self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY].append(result)
+        self.clipboardDictMongo[self.MONGO_OBJECT_DATA_KEY].append(result)
         self.logger.info("MONGODB ==> update clipboardDictMongo: " + str(self.clipboardDictMongo))
         self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.clipboardDictMongo[ClipBoard.MONGO_OBJECT_DATA_KEY])                            
 # if __name__ == '__main__':

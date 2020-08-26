@@ -3,31 +3,38 @@ import time
 
 class temperature():
 
-    TEMPERATURE_KEY = "cpu"
-    DECODE_TYPE = 'utf-8'
-    LINUX_COMMAND = 'osx-cpu-temp'
-    MONGO_OBJECT_ID_KEY = "name"
-    MONGO_OBJECT_DATA_KEY = "data"
+
     #init the vars, will contain dict with key of cpu and values of list with temperature of the cpu:
     #{'cpu':[60,50.5,70.3]}
-    def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
+    def __init__(self,logger,dateManager,redis,queue,elastic,mongo,propertiesLoader):
+        self.propertiesLoader = propertiesLoader
         self.logger = logger
+        self.initalizeProperties()
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
         self.e = elastic
         self.m = mongo
-        self.NoSqlDocId = temperature.TEMPERATURE_KEY # id of the class for elastic
+        self.NoSqlDocId = self.TEMPERATURE_KEY # id of the class for elastic
         self.keyListenerElasticIndexAndMongoDocId = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.NoSqlDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic()
         self.refreshAndUpdateDataFromMongoDB()
+
+
+    def initalizeProperties(self):
+        self.TEMPERATURE_KEY = self.propertiesLoader.getProperty("TEMPERATURE_KEY")
+        self.DECODE_TYPE = self.propertiesLoader.getProperty("DECODE_TYPE")
+        self.LINUX_COMMAND = self.propertiesLoader.getProperty("LINUX_COMMAND")
+        self.MONGO_OBJECT_ID_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_ID_KEY")
+        self.MONGO_OBJECT_DATA_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_DATA_KEY")
+        self.logger.info("on temperature -> properties initalized")
 
     #call to subprocess and do linux command. taking the output and insert it to the dict object. this occurs every 1 minute
     def cpuTemp(self):
         while True:
             starttime = time.time()
             time.sleep(60.0 - ((time.time() - starttime) % 60.0))
-            result = subprocess.run([temperature.LINUX_COMMAND], stdout=subprocess.PIPE).stdout.decode(temperature.DECODE_TYPE).replace("\u00b0C\n", "")
+            result = subprocess.run([self.LINUX_COMMAND], stdout=subprocess.PIPE).stdout.decode(self.DECODE_TYPE).replace("\u00b0C\n", "")
             # self.logger.info("CPU temperature is " + result)
             # self.insertToDict(result)
             self.refreshAndUpdateDataFromRedisDB(result)
@@ -41,13 +48,13 @@ class temperature():
         if(self.r.isKeyExists(self.dateManager.getDate())):
             result = self.r.getValue(self.dateManager.getDate())
             self.tempDict = result
-            if(self.tempDict.get(temperature.TEMPERATURE_KEY) is None):
-                self.tempDict[temperature.TEMPERATURE_KEY] = [data]
+            if(self.tempDict.get(self.NoSqlDocId) is None):
+                self.tempDict[self.NoSqlDocId] = [data]
             else:
-                self.tempDict[temperature.TEMPERATURE_KEY].append(data)
+                self.tempDict[self.NoSqlDocId].append(data)
         else:
             self.tempDict = {}
-            self.tempDict[temperature.TEMPERATURE_KEY] = [data]
+            self.tempDict[self.NoSqlDocId] = [data]
             self.logger.info("REDISDB ==> initalize tempDict: " + str(self.tempDict))
         self.queue.put(self.tempDict)
         self.logger.info("REDISDB ==> update self.tempDict: " + str(self.tempDict))
@@ -66,12 +73,12 @@ class temperature():
             self.tempDictElastic = result
         else:
             self.tempDictElastic = {}
-            self.tempDictElastic[temperature.TEMPERATURE_KEY] = []
+            self.tempDictElastic[self.NoSqlDocId] = []
             self.logger.info("ELASTIC ==> initalize tempDictElastic: " + str(self.tempDictElastic))
 
     # update the elastic index document with the object details of this class
     def updateElasticIndexes(self,result):
-        self.tempDictElastic[temperature.TEMPERATURE_KEY].append(result)
+        self.tempDictElastic[self.NoSqlDocId].append(result)
         self.logger.info("ELASTIC ==> update tempDictElastic: " + str(self.tempDictElastic))
         self.e.putDataOnIndex(self.keyListenerElasticIndexAndMongoDocId,self.tempDictElastic,self.NoSqlDocId)
 
@@ -82,15 +89,15 @@ class temperature():
         if(result != None):
             self.tempDictMongo = result
         else:
-            self.tempDictMongo = {temperature.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, temperature.MONGO_OBJECT_DATA_KEY : [] }
+            self.tempDictMongo = {self.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, self.MONGO_OBJECT_DATA_KEY : [] }
             self.logger.info("MONGODB ==> initalize tempDictMongo: " + str(self.tempDictMongo))
 
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self,result):
-        self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY].append(result)
+        self.tempDictMongo[self.MONGO_OBJECT_DATA_KEY].append(result)
         self.logger.info("MONGODB ==> update tempDictMongo: " + str(self.tempDictMongo))
-        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.tempDictMongo[temperature.MONGO_OBJECT_DATA_KEY])
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.tempDictMongo[self.MONGO_OBJECT_DATA_KEY])
 
 # t = temperature()
 # t.cpuTemp()

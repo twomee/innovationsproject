@@ -11,12 +11,19 @@ from pymongo import MongoClient
 # 24082020clipboard:
 # {name: clipboard, data: [some,text,that,copied]}
 class mongoDB:
-    CONNECTION_DETAILS = 'mongodb://localhost:27017'
-    def __init__(self,logger):
+
+    def __init__(self,logger,propertiesLoader):
         self.logger = logger
-        self.client = MongoClient(mongoDB.CONNECTION_DETAILS)
+        self.propertiesLoader = propertiesLoader
+        self.initalizeProperties()
+        self.client = MongoClient(self.MONGODB_CONNECTION_DETAILS)
         # self.client.drop_database('innovations')
         self.db = self.client.innovations # specify which database you actually want to use
+
+
+    def initalizeProperties(self):
+        self.MONGODB_CONNECTION_DETAILS = self.propertiesLoader.getProperty("MONGODB_CONNECTION_DETAILS")
+        self.logger.info("on mongoDB -> properties initalized")
 
     # update or insert new(if not exist) the data to the same object by key name which is 'name'
     def updateNewOrExistDocument(self,docId,key,data):

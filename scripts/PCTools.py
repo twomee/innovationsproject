@@ -9,9 +9,10 @@ from redisDB import redisDB
 from elastic import Elastic
 from mongoDB import mongoDB
 import queue
+from PropertiesLoader import PropertiesLoader
 # from .Project import keyboardMouseListener
 
-
+PROPERTIES_FILE_NAME = "scripts/appconfig.ini"
 
 
 
@@ -19,16 +20,18 @@ import queue
 def main():
     logger = Log.configureLogger() 
     q = queue.Queue()
+    propertiesLoader = PropertiesLoader(logger)
+    propertiesLoader.loadProperties(PROPERTIES_FILE_NAME)
 
     # absPath = pathlib.Path().absolute()
     # print(absPath)
-    dateManager = DateManager()
+    dateManager = DateManager(logger,propertiesLoader)
     r = redisDB(logger)
-    e = Elastic(logger)
-    m = mongoDB(logger)
-    klo = KeysListnerObject(logger,dateManager,r,q,e,m)
-    t = temperature(logger,dateManager,r,q,e,m)
-    cb = ClipBoard(logger,dateManager,r,q,e,m)
+    e = Elastic(logger,propertiesLoader)
+    m = mongoDB(logger,propertiesLoader)
+    klo = KeysListnerObject(logger,dateManager,r,q,e,m,propertiesLoader)
+    t = temperature(logger,dateManager,r,q,e,m,propertiesLoader)
+    cb = ClipBoard(logger,dateManager,r,q,e,m,propertiesLoader)
 
     threading.Thread(target=klo.run, args=[]).start()
     threading.Thread(target=t.cpuTemp, args=[]).start()

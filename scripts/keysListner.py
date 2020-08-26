@@ -3,22 +3,27 @@ from pynput import keyboard
 
 class KeysListnerObject():
 
-    MONGO_OBJECT_ID_KEY = "name"
-    MONGO_OBJECT_DATA_KEY = "data"
-    KEYLISTENER_KEY = "keylistener"
     #init the vars, will contain dict which count the nubmers of times every char was pressed:
     #{'a':1,'b':2,'c':10,'d':0}
-    def __init__(self,logger,dateManager,redis,queue,elastic,mongo):
+    def __init__(self,logger,dateManager,redis,queue,elastic,mongo,propertiesLoader):
         self.logger = logger
+        self.propertiesLoader = propertiesLoader
+        self.initalizeProperties()
         self.dateManager =  dateManager
         self.r = redis
         self.queue = queue
         self.e = elastic
         self.m = mongo
-        self.NoSqlDocId =  KeysListnerObject.KEYLISTENER_KEY # id of the class for elastic
+        self.NoSqlDocId =  self.KEYLISTENER_KEY # id of the class for elastic
         self.keyListenerElasticIndexAndMongoDocId = self.dateManager.getDateWithoutSpecialCharsForElastic() + self.NoSqlDocId #index of elastic for this class
         self.refreshAndUpdateDataFromElastic()
         self.refreshAndUpdateDataFromMongoDB()
+
+    def initalizeProperties(self):
+        self.MONGO_OBJECT_ID_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_ID_KEY")
+        self.MONGO_OBJECT_DATA_KEY = self.propertiesLoader.getProperty("MONGO_OBJECT_DATA_KEY")
+        self.KEYLISTENER_KEY = self.propertiesLoader.getProperty("KEYLISTENER_KEY")
+        self.logger.info("on KeysListnerObject -> properties initalized")
 
     #take every key that presses and insert him to dict object which mapping the chars.
     def on_press(self,key):
@@ -104,19 +109,19 @@ class KeysListnerObject():
         if(result != None):
             self.alphabetMognoDB = result
         else:
-            self.alphabetMognoDB = {KeysListnerObject.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, KeysListnerObject.MONGO_OBJECT_DATA_KEY : {} }
+            self.alphabetMognoDB = {self.MONGO_OBJECT_ID_KEY : self.NoSqlDocId, self.MONGO_OBJECT_DATA_KEY : {} }
             self.logger.info("MONGODB ==> initalize alphabetMognoDB: " + str(self.alphabetMognoDB))
 
     def updateMongoDictObject(self,key):
-        if(key.char in self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY]):
-            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] + 1
+        if(key.char in self.alphabetMognoDB[self.MONGO_OBJECT_DATA_KEY]):
+            self.alphabetMognoDB[self.MONGO_OBJECT_DATA_KEY][key.char] = self.alphabetMognoDB[self.MONGO_OBJECT_DATA_KEY][key.char] + 1
         else:
-            self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY][key.char] = 1
+            self.alphabetMognoDB[self.MONGO_OBJECT_DATA_KEY][key.char] = 1
         self.logger.info("MONGODB ==> update alphabetMognoDB: " + str(self.alphabetMognoDB))
 
     #insert and update the dict object on DB.
     def updateMongoDBValues(self):
-        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.alphabetMognoDB[KeysListnerObject.MONGO_OBJECT_DATA_KEY])
+        self.m.updateNewOrExistDocument(self.keyListenerElasticIndexAndMongoDocId,self.NoSqlDocId,self.alphabetMognoDB[self.MONGO_OBJECT_DATA_KEY])
 
 # Collect events until released
 # if __name__ == '__main__':
