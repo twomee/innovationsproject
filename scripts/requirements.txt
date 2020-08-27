@@ -1,0 +1,9 @@
+keyboard
+AppKit
+redis
+jproperties
+pymongo
+pynput
+elasticsearch
+
+#pip install -r requirements.txt
