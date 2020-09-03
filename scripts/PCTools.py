@@ -10,7 +10,7 @@ from elastic import Elastic
 from mongoDB import mongoDB
 import queue
 from PropertiesLoader import PropertiesLoader
-from AudoModuleInstaller import AudoModuleInstaller
+# from AudoModuleInstaller import AudoModuleInstaller
 # from .Project import keyboardMouseListener
 
 PROPERTIES_FILE_NAME = "scripts/appconfig.ini"
@@ -22,8 +22,8 @@ def main():
     logger = Log.configureLogger() 
     propertiesLoader = PropertiesLoader(logger)
     propertiesLoader.loadProperties(PROPERTIES_FILE_NAME)
-    moduleInstaller = AudoModuleInstaller(logger,propertiesLoader)
-    moduleInstaller.installMissingModules()
+    # moduleInstaller = AudoModuleInstaller(logger,propertiesLoader)
+    # moduleInstaller.installMissingModules()
     q = queue.Queue()
 
 

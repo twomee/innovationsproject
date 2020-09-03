@@ -1,5 +1,5 @@
-import keyboard
 import AppKit
+import keyboard
 
 
 class ClipBoard():
