@@ -4,6 +4,7 @@ COPY requirements.txt .
 
 # install dependencies to the local user directory (eg. /root/.local)
 RUN pip install --user -r requirements.txt
+RUN apt-get install libcairo2-dev
 
 # second unnamed stage
 FROM python:3.8-slim
