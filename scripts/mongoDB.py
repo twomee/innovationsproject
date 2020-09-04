@@ -16,9 +16,12 @@ class mongoDB:
         self.logger = logger
         self.propertiesLoader = propertiesLoader
         self.initalizeProperties()
-        self.client = MongoClient(self.MONGODB_CONNECTION_DETAILS)
-        # self.client.drop_database('innovations')
-        self.db = self.client.innovations # specify which database you actually want to use
+        try:
+            self.client = MongoClient(self.MONGODB_CONNECTION_DETAILS)
+            # self.client.drop_database('innovations')
+            self.db = self.client.innovations # specify which database you actually want to use
+        except Exception as e:
+            self.logger.error("error on connect to mongoDB")
 
 
     def initalizeProperties(self):

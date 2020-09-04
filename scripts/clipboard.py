@@ -1,4 +1,4 @@
-import AppKit
+import xerox
 import keyboard
 
 
@@ -16,7 +16,6 @@ class ClipBoard():
         self.dateManager = dateManager
         self.r = redis
         self.queue = queue
-        self.pasteboard = AppKit.NSPasteboard.generalPasteboard()
         self.e = elastic
         self.m = mongo
         self.NoSqlDocId = ClipBoard.CLIPBOARD_KEY # id of the class for elastic
@@ -34,18 +33,18 @@ class ClipBoard():
     def copyFromClipBoard(self):
         #take temp copy of clipboard to prevent insert same value all the time
         #and also for prevent to insert trash like copy from last run
-        tempCopy = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
-        pasteboardString = None
+        tempCopiedClipboard = xerox.paste()
+        copiedClipboard = None
         while True:
             try:
-                pasteboardString = self.pasteboard.stringForType_(AppKit.NSStringPboardType)
-                if(pasteboardString != tempCopy and pasteboardString is not None):
-                    tempCopy = pasteboardString
+                copiedClipboard = xerox.paste()
+                if(copiedClipboard != tempCopiedClipboard and copiedClipboard is not None):
+                    tempCopiedClipboard = copiedClipboard
                     # self.insertToDict(pasteboardString)
-                    self.refreshAndUpdateDataFromRedisDB(pasteboardString)
+                    self.refreshAndUpdateDataFromRedisDB(copiedClipboard)
                     self.updatreDBValues()
-                    self.updateElasticIndexes(pasteboardString)
-                    self.updateMongoDBValues(pasteboardString)
+                    self.updateElasticIndexes(copiedClipboard)
+                    self.updateMongoDBValues(copiedClipboard)
             except Exception as error:
                 self.logger.error(error)
 

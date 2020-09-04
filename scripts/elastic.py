@@ -23,7 +23,10 @@ class Elastic:
         self.logger = logger
         self.propertiesLoader = propertiesLoader
         self.initalizeProperties()
-        self.es = Elasticsearch([{'host': self.ELASTIC_HOST, 'port': self.ELASTIC_PORT}])
+        try:
+            self.es = Elasticsearch([{'host': self.ELASTIC_HOST, 'port': self.ELASTIC_PORT}])
+        except Exception as e:
+            self.logger.error("error on connect to elastic")
 
     def initalizeProperties(self):
         self.ELASTIC_HOST = self.propertiesLoader.getProperty("ELASTIC_HOST")

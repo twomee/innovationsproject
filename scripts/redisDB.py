@@ -20,7 +20,10 @@ class redisDB:
     #init redis DB
     def __init__(self,logger):
         self.logger = logger
-        self.r = redis.Redis()
+        try:
+            self.r = redis.Redis()
+        except Exception as e:
+            self.logger.error("error on connect to redisDB")
 
     # set value to object on redis DB with transactional action.
     # mean that if two modules trying to set same object,
@@ -65,7 +68,13 @@ class redisDB:
         
     #check if key exists on redis DB
     def isKeyExists(self,key):
-        return self.r.exists(key)
+        result = None
+        try:
+            result = self.r.exists(key)
+        except Exception as e:
+            self.logger.warning("REDISDB ==> error on get value from Redis")
+        return result
+
 
 
 
