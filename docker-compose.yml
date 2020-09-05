@@ -1,0 +1,22 @@
+version: '3'
+services:
+    innovations-app:
+        build: .
+        ports:
+            - "8000:8000"
+        links:
+            - redis
+            - mongo
+            - elastic
+        depends_on:
+            - redis
+            - mongo
+            - elastic   
+    redis:
+        image: "redis:alpine"
+    mongo:
+        image: "mongo"
+        ports:
+            - "27017:27017"
+    elastic:
+        image: "docker.elastic.co/elasticsearch/elasticsearch:7.9.1"

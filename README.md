@@ -72,3 +72,17 @@ mongoDB:
     -temperature - will have structure like that:
         collection name: 24082020temperature:
         data:  {name: cpu, data: [10,70,50]}
+
+
+initilaize DBs:
+mongo:
+mongod
+*if ther eis already service that run, run the command "pgrep mongod" and kill the pid.
+*if mongo cant run due mongo.lock(shutting down the db in inccorect way), delete this file.
+
+redis:
+redis-server
+
+elastic:
+elasticsearch
+*if the elastic says there is already service that running, run the command "ps aux | grep 'java'" and kill the pid.

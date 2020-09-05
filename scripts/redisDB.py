@@ -54,6 +54,8 @@ class redisDB:
                         "REDISDB ==> WatchError #%d: %s; retrying",
                         error_count, date
                         )
+                except Exception as e:
+                    self.logger.warning("REDISDB ==> error on watching redisDB value")
         return None
 
     #get value from redis DB by key which is the date of today
@@ -69,6 +71,7 @@ class redisDB:
     #check if key exists on redis DB
     def isKeyExists(self,key):
         result = None
+        
         try:
             result = self.r.exists(key)
         except Exception as e:

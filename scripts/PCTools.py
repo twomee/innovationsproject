@@ -2,7 +2,7 @@ import pathlib
 import threading
 from logConfig import Log
 from clipboard import ClipBoard
-from keysListner import KeysListnerObject
+# from keysListner import KeysListnerObject
 from sensorTemp import temperature
 from DateManager import DateManager
 from redisDB import redisDB
@@ -13,7 +13,7 @@ from PropertiesLoader import PropertiesLoader
 # from AudoModuleInstaller import AudoModuleInstaller
 # from .Project import keyboardMouseListener
 
-PROPERTIES_FILE_NAME = "scripts/appconfig.ini"
+PROPERTIES_FILE_NAME = "appconfig.ini"
 
 
 
@@ -33,11 +33,11 @@ def main():
     r = redisDB(logger)
     e = Elastic(logger,propertiesLoader)
     m = mongoDB(logger,propertiesLoader)
-    klo = KeysListnerObject(logger,dateManager,r,q,e,m,propertiesLoader)
+    # klo = KeysListnerObject(logger,dateManager,r,q,e,m,propertiesLoader)
     t = temperature(logger,dateManager,r,q,e,m,propertiesLoader)
     cb = ClipBoard(logger,dateManager,r,q,e,m,propertiesLoader)
 
-    threading.Thread(target=klo.run, args=[]).start()
+    # threading.Thread(target=klo.run, args=[]).start()
     threading.Thread(target=t.cpuTemp, args=[]).start()
     threading.Thread(target=cb.copyFromClipBoard, args=[]).start()
 
